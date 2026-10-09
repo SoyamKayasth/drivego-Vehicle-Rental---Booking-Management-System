@@ -1,0 +1,8 @@
+{
+  "name": "DriveGo - Vehicle Rental & Booking Management System",
+  "description": "Production-grade MERN vehicle rental and booking management platform featuring multi-role access, real-time availability, conflict prevention, pricing engine, and mock payments.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
