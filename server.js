@@ -6,7 +6,8 @@ import app from './server/app.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const PORT = parseInt(process.env.PORT || '3000', 10);
+
+const PORT = Number(process.env.PORT) || 3000;
 
 async function startServer() {
   try {
@@ -26,14 +27,12 @@ async function startServer() {
     }
 
     app.listen(PORT, '0.0.0.0', () => {
-      console.log(`DriveGo Server running on port ${PORT}`);
+      console.log(`DriveGo running on port ${PORT}`);
     });
   } catch (error) {
-    console.error('Server startup failed:', error);
+    console.error('Startup error:', error);
     process.exit(1);
   }
 }
-
-startServer();
 
 startServer();
