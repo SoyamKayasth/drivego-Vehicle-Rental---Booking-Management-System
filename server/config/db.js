@@ -13,25 +13,46 @@ if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
+
 export let isConnectedToMongo = false;
 
 export const connectDB = async () => {
-  const mongoURI = "mongodb://localhost:27017/drivego";
-  if (mongoURI) {
-    try {
-      await mongoose.connect(mongoURI, {
-        serverSelectionTimeoutMS: 2500,
-      });
-      isConnectedToMongo = true;
-      console.log('MongoDB connected successfully via Mongoose.');
-      return true;
-    } catch (err) {
-      console.warn('Live MongoDB connection timed out or failed. Falling back to embedded persistent datastore:', err.message);
-      isConnectedToMongo = false;
-      return false;
+  const mongoURI = process.env.MONGO_URI;
+  if (!mongoURI) {
+    isConnectedToMongo = false;
+
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        'MONGO_URI is required in production. Configure it in Render.'
+      );
     }
-  } else {
-    console.log('No MONGO_URI specified. Operating with persistent embedded datastore.');
+
+    console.warn(
+      'MONGO_URI is missing. Using the local datastore in development.'
+    );
+
+    return false;
+  }
+
+  try {
+    await mongoose.connect(mongoURI, {
+      serverSelectionTimeoutMS: 10000,
+    });
+
+    isConnectedToMongo = true;
+    console.log('MongoDB connected successfully.');
+
+    return true;
+  } catch (err) {
+    isConnectedToMongo = false;
+
+    console.error('MongoDB connection failed:', err.message);
+
+    if (process.env.NODE_ENV === 'production') {
+      throw err;
+    }
+
+    console.warn('Using the local datastore in development.');
     return false;
   }
 };
@@ -46,6 +67,7 @@ class DataStore {
       payments: [],
       reviews: [],
     };
+
     this.load();
   }
 
@@ -56,13 +78,20 @@ class DataStore {
         this.state = JSON.parse(raw);
       }
     } catch (err) {
-      console.error('Error reading store.json, initializing fresh state:', err);
+      console.error(
+        'Error reading store.json, initializing fresh state:',
+        err
+      );
     }
   }
 
   save() {
     try {
-      fs.writeFileSync(DATA_FILE, JSON.stringify(this.state, null, 2), 'utf-8');
+      fs.writeFileSync(
+        DATA_FILE,
+        JSON.stringify(this.state, null, 2),
+        'utf-8'
+      );
     } catch (err) {
       console.error('Error saving store.json:', err);
     }
@@ -72,6 +101,7 @@ class DataStore {
     if (!this.state[name]) {
       this.state[name] = [];
     }
+
     return this.state[name];
   }
 }
