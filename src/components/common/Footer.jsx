@@ -57,15 +57,11 @@ export const Footer = () => {
 
           {/* MCA Portfolio & Test Credentials */}
           <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2 text-xs">
-            <h4 className="font-semibold text-slate-200">MCA Academic Project</h4>
+            <h4 className="font-semibold text-slate-200">Build By Avinash Sonawanwe &hearts;</h4>
             <p className="text-slate-400 text-[11px] leading-relaxed">
               MERN Stack architecture featuring MongoDB, Express.js, React.js, Node.js with JWT auth and double-booking conflict algorithms.
             </p>
-            <div className="pt-2 border-t border-slate-800 text-[11px] text-slate-400 space-y-1">
-              <div><strong className="text-slate-300">Customer:</strong> customer1@drivego.com / password123</div>
-              <div><strong className="text-slate-300">Owner:</strong> owner1@drivego.com / password123</div>
-              <div><strong className="text-slate-300">Admin:</strong> admin@drivego.com / admin123</div>
-            </div>
+            
           </div>
         </div>
 
