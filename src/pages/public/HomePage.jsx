@@ -51,25 +51,25 @@ export const HomePage = () => {
     {
       name: 'Luxury & Cars',
       category: 'Car',
-      image: '/src/assets/images/category_premium_cars_1791462718047.jpg',
+      image: '/images/category_premium_cars_1791462718047.jpg',
       count: 'Executive sedans & city cars',
     },
     {
       name: 'All-Terrain SUVs',
       category: 'SUV',
-      image: '/src/assets/images/category_suv_adventure_1791462729440.jpg',
+      image: '/images/category_suv_adventure_1791462729440.jpg',
       count: 'Rugged 4x4 & 7-seaters',
     },
     {
       name: 'Bikes & Scooters',
       category: 'Bike',
-      image: '/src/assets/images/category_urban_motorcycle_1791462741204.jpg',
+      image: '/images/category_urban_motorcycle_1791462741204.jpg',
       count: 'Cruisers, street & EVs',
     },
     {
       name: 'Utility & Vans',
       category: 'Van',
-      image: '/src/assets/images/category_van_utility_1791462751657.jpg',
+      image: '/images/category_van_utility_1791462751657.jpg',
       count: 'Multi-seat shuttles & cargo',
     },
   ];
@@ -81,7 +81,7 @@ export const HomePage = () => {
         {/* Background Image Scrim */}
         <div className="absolute inset-0 z-0">
           <img
-            src="/src/assets/images/hero_fleet_showcase_1791462708482.jpg"
+            src="/images/hero_fleet_showcase_1791462708482.jpg"
             alt="DriveGo Rental Fleet"
             className="w-full h-full object-cover object-center opacity-35"
           />
