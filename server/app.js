@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { connectDB } from './config/db.js';
-import { seedDatabase } from './seed/seedData.js';
+// import { seedDatabase } from './seed/seedData.js';
 import { errorHandler, notFoundHandler } from './middleware/errorMiddleware.js';
 
 // Route imports
@@ -21,7 +21,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Initialize DB and Seed
 await connectDB();
-await seedDatabase();
+// await seedDatabase();
 
 // Health Check
 app.get('/api/health', (req, res) => {

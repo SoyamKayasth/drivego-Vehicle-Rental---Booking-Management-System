@@ -1,15 +1,45 @@
 import bcrypt from 'bcryptjs';
-import { dbStore } from '../config/db.js';
+import mongoose from 'mongoose';
+
+import {
+  dbStore,
+  isConnectedToMongo,
+} from '../config/db.js';
+
+import {
+  userSchema,
+  vehicleSchema,
+  bookingSchema,
+  paymentSchema,
+  reviewSchema,
+} from '../models/schemas.js';
+
+import {
+  User,
+  Vehicle,
+  Booking,
+  Payment,
+  Review,
+} from '../models/index.js';
 
 export const seedDatabase = async () => {
-  // If users already exist in store, don't re-seed
-  const existingUsers = dbStore.getCollection('users');
-  if (existingUsers && existingUsers.length > 0) {
-    console.log(`Database already populated with ${existingUsers.length} users and ${dbStore.getCollection('vehicles').length} vehicles.`);
-    return;
+  // Check the local datastore only during local development.
+  if (!isConnectedToMongo) {
+    const existingUsers = dbStore.getCollection('users');
+
+    if (existingUsers.length > 0) {
+      console.log(
+        `Local database already populated with ${
+          existingUsers.length
+        } users and ${
+          dbStore.getCollection('vehicles').length
+        } vehicles.`
+      );
+
+      return;
+    }
   }
 
-  console.log('Seeding DriveGo database with MCA-compliant test dataset...');
 
   const adminPasswordHash = await bcrypt.hash('admin123', 10);
   const defaultPasswordHash = await bcrypt.hash('password123', 10);
@@ -810,12 +840,86 @@ export const seedDatabase = async () => {
     },
   ];
 
-  dbStore.state.users = users;
-  dbStore.state.vehicles = vehicles;
-  dbStore.state.bookings = bookings;
-  dbStore.state.payments = payments;
-  dbStore.state.reviews = reviews;
-  dbStore.save();
+ 
+if (isConnectedToMongo) {
+  const connection = mongoose.connection;
 
-  console.log('DriveGo initial dataset seeded successfully!');
+  if (connection.readyState !== 1 || !connection.db) {
+    throw new Error('MongoDB is not connected.');
+  }
+
+  // Use actual Mongoose models, not the custom wrappers.
+  const UserModel =
+    mongoose.models.User ||
+    mongoose.model('User', userSchema);
+
+  const VehicleModel =
+    mongoose.models.Vehicle ||
+    mongoose.model('Vehicle', vehicleSchema);
+
+  const BookingModel =
+    mongoose.models.Booking ||
+    mongoose.model('Booking', bookingSchema);
+
+  const PaymentModel =
+    mongoose.models.Payment ||
+    mongoose.model('Payment', paymentSchema);
+
+  const ReviewModel =
+    mongoose.models.Review ||
+    mongoose.model('Review', reviewSchema);
+
+  const metadata = connection.db.collection('_app_metadata');
+  const seedKey = 'drivego-cloud-seed-v2';
+
+  const completed = await metadata.findOne({ _id: seedKey });
+
+  if (completed) {
+    console.log('Cloud seed already completed. Skipping.');
+    return;
+  }
+
+  const collections = [
+    [UserModel, users],
+    [VehicleModel, vehicles],
+    [BookingModel, bookings],
+    [PaymentModel, payments],
+    [ReviewModel, reviews],
+  ];
+
+  for (const [Model, documents] of collections) {
+    if (!documents.length) continue;
+
+    await Model.bulkWrite(
+      documents.map((document) => ({
+        replaceOne: {
+          filter: { _id: document._id },
+          replacement: document,
+          upsert: true,
+        },
+      })),
+      { ordered: true }
+    );
+  }
+
+  await metadata.insertOne({
+    _id: seedKey,
+    completedAt: new Date(),
+  });
+
+  console.log('DriveGo cloud database seeded successfully.');
+  return;
+}
+
+// Local development only
+dbStore.state.users = users;
+dbStore.state.vehicles = vehicles;
+dbStore.state.bookings = bookings;
+dbStore.state.payments = payments;
+dbStore.state.reviews = reviews;
+
+dbStore.save();
+
+console.log('DriveGo local database seeded successfully!');
+
 };

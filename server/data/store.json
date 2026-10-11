@@ -1,6 +1,21 @@
 {
   "users": [
     {
+      "_id": "65757ad4673a97e316a8629",
+      "name": "Soyam Meghraj Kayasth",
+      "email": "megharjmk89@gmail.com",
+      "password": "$2b$10$Dg0jpIAdUSdFTjlVOIO2ze9x1oOhtbKyEWvNDXct.eIv4OB9hnF1q",
+      "phone": "+919970097411",
+      "role": "customer",
+      "address": "",
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "isBlocked": false,
+      "profileImage": "https://api.dicebear.com/7.x/initials/svg?seed=Soyam%20Meghraj%20Kayasth",
+      "createdAt": "2026-10-10T19:58:18.753Z",
+      "updatedAt": "2026-10-10T19:58:18.753Z"
+    },
+    {
       "_id": "650faa3bacd41d73a3ae806",
       "name": "Chetan Rathod",
       "email": "chetan123@gmail.com",

@@ -8,25 +8,27 @@ import {
   reviewSchema
 } from './schemas.js';
 
-let MongoUser, MongoVehicle, MongoBooking, MongoPayment, MongoReview;
+const MongoUser =
+  mongoose.models.User ||
+  mongoose.model('User', userSchema);
 
-if (mongoose.models && mongoose.models.User) {
-  MongoUser = mongoose.models.User;
-  MongoVehicle = mongoose.models.Vehicle;
-  MongoBooking = mongoose.models.Booking;
-  MongoPayment = mongoose.models.Payment;
-  MongoReview = mongoose.models.Review;
-} else {
-  try {
-    MongoUser = mongoose.model('User', userSchema);
-    MongoVehicle = mongoose.model('Vehicle', vehicleSchema);
-    MongoBooking = mongoose.model('Booking', bookingSchema);
-    MongoPayment = mongoose.model('Payment', paymentSchema);
-    MongoReview = mongoose.model('Review', reviewSchema);
-  } catch {
-    // If not connected, we still have schemas ready
-  }
-}
+const MongoVehicle =
+  mongoose.models.Vehicle ||
+  mongoose.model('Vehicle', vehicleSchema);
+
+const MongoBooking =
+  mongoose.models.Booking ||
+  mongoose.model('Booking', bookingSchema);
+
+const MongoPayment =
+  mongoose.models.Payment ||
+  mongoose.model('Payment', paymentSchema);
+
+const MongoReview =
+  mongoose.models.Review ||
+  mongoose.model('Review', reviewSchema);
+
+
 
 // Helper to generate mongo-like ObjectId string
 export const generateId = () => {
@@ -135,13 +137,14 @@ class QueryWrapper {
 }
 
 // Unified Store Model Generator
-const createStoreModel = (collectionName) => {
+const createStoreModel = (collectionName, MongoModel) => {
   return {
-    find(filter = {}) {
-      if (isConnectedToMongo && MongoUser) {
-        const modelName = collectionName.slice(0, -1).charAt(0).toUpperCase() + collectionName.slice(0, -1).slice(1);
-        return mongoose.models[modelName].find(filter);
-      }
+   find(filter = {}) {
+  if (isConnectedToMongo) {
+    return MongoModel.find(filter).lean();
+  }
+ 
+
       const list = dbStore.getCollection(collectionName);
       const filtered = list.filter(item => {
         for (const [k, v] of Object.entries(filter)) {
@@ -164,10 +167,13 @@ const createStoreModel = (collectionName) => {
     },
 
     findOne(filter = {}) {
-      if (isConnectedToMongo && MongoUser) {
-        const modelName = collectionName.slice(0, -1).charAt(0).toUpperCase() + collectionName.slice(0, -1).slice(1);
-        return mongoose.models[modelName].findOne(filter);
+       if (isConnectedToMongo) {
+    return MongoModel.findOne(filter).lean();
       }
+      // if (isConnectedToMongo && MongoUser) {
+      //   const modelName = collectionName.slice(0, -1).charAt(0).toUpperCase() + collectionName.slice(0, -1).slice(1);
+      //   return mongoose.models[modelName].findOne(filter);
+      // }
       const list = dbStore.getCollection(collectionName);
       const found = list.find(item => {
         for (const [k, v] of Object.entries(filter)) {
@@ -184,13 +190,25 @@ const createStoreModel = (collectionName) => {
       return new QueryWrapper(collectionName, found || null);
     },
 
-    findById(id) {
-      if (!id) return new QueryWrapper(collectionName, null);
-      const cleanId = String(id);
-      return this.findOne({ _id: cleanId });
-    },
 
+   findById(id) {
+  if (!id) return Promise.resolve(null);
+
+  if (isConnectedToMongo) {
+    if (!mongoose.isValidObjectId(id)) {
+      return Promise.resolve(null);
+    }
+
+    return MongoModel.findById(id).lean();
+  }
+
+  return this.findOne({ _id: String(id) });
+},
     async create(doc) {
+        if (isConnectedToMongo) {
+    const created = await MongoModel.create(doc);
+    return created.toObject();
+  }
       const now = new Date().toISOString();
       const newDoc = {
         _id: doc._id || generateId(),
@@ -204,7 +222,16 @@ const createStoreModel = (collectionName) => {
       return { ...newDoc };
     },
 
-    async findByIdAndUpdate(id, update, options = {}) {
+   async findByIdAndUpdate(id, update, options = {}) {
+  if (isConnectedToMongo) {
+    return MongoModel.findByIdAndUpdate(id, update, {
+      ...options,
+      new: true,
+      runValidators: true,
+    }).lean();
+  }
+
+  // Keep your existing local update logic here.
       const cleanId = String(id);
       const list = dbStore.getCollection(collectionName);
       const index = list.findIndex(i => String(i._id) === cleanId || String(i.id) === cleanId);
@@ -221,8 +248,13 @@ const createStoreModel = (collectionName) => {
       return { ...updated };
     },
 
-    async findByIdAndDelete(id) {
-      const cleanId = String(id);
+async findByIdAndDelete(id) {
+  if (isConnectedToMongo) {
+    return MongoModel.findByIdAndDelete(id).lean();
+  }
+
+  // Keep your existing local delete logic here.
+        const cleanId = String(id);
       const list = dbStore.getCollection(collectionName);
       const index = list.findIndex(i => String(i._id) === cleanId || String(i.id) === cleanId);
       if (index === -1) return null;
@@ -231,24 +263,40 @@ const createStoreModel = (collectionName) => {
       return removed;
     },
 
-    async countDocuments(filter = {}) {
-      const results = await this.find(filter);
-      return Array.isArray(results.items) ? results.items.length : 0;
-    },
+  async countDocuments(filter = {}) {
+  if (isConnectedToMongo) {
+    return MongoModel.countDocuments(filter);
+  }
 
-    async deleteMany(filter = {}) {
-      if (Object.keys(filter).length === 0) {
-        dbStore.state[collectionName] = [];
-        dbStore.save();
-        return { deletedCount: 0 };
-      }
-      return { deletedCount: 0 };
-    }
+  const results = await this.find(filter);
+
+  return Array.isArray(results.items)
+    ? results.items.length
+    : 0;
+},
+
+  async deleteMany(filter = {}) {
+  if (isConnectedToMongo) {
+    return MongoModel.deleteMany(filter);
+  }
+
+  if (Object.keys(filter).length === 0) {
+    const deletedCount =
+      dbStore.getCollection(collectionName).length;
+
+    dbStore.state[collectionName] = [];
+    dbStore.save();
+
+    return { deletedCount };
+  }
+
+  return { deletedCount: 0 };
+  },
   };
 };
 
-export const User = createStoreModel('users');
-export const Vehicle = createStoreModel('vehicles');
-export const Booking = createStoreModel('bookings');
-export const Payment = createStoreModel('payments');
-export const Review = createStoreModel('reviews');
+export const User = createStoreModel('users', MongoUser);
+export const Vehicle = createStoreModel('vehicles', MongoVehicle);
+export const Booking = createStoreModel('bookings', MongoBooking);
+export const Payment = createStoreModel('payments', MongoPayment);
+export const Review = createStoreModel('reviews', MongoReview);
