@@ -32,8 +32,14 @@ export const getVehicles = async (req, res, next) => {
       queryFilter.transmission = transmission;
     }
 
-    let allVehicles = await Vehicle.find(queryFilter);
-    let items = allVehicles.items || [];
+    const allVehicles = await Vehicle.find(queryFilter);
+
+let items = Array.isArray(allVehicles)
+  ? allVehicles
+  : Array.isArray(allVehicles?.items)
+    ? allVehicles.items
+    : [];
+
 
     // Filter by text search
     if (search) {
@@ -181,8 +187,13 @@ export const checkAvailability = async (req, res, next) => {
 export const getOwnerVehicles = async (req, res, next) => {
   try {
     const ownerId = req.user._id || req.user.id;
-    const vehicles = await Vehicle.find({ owner: ownerId });
-    const items = vehicles.items || [];
+   const vehicles = await Vehicle.find({ owner: ownerId });
+
+const items = Array.isArray(vehicles)
+  ? vehicles
+  : Array.isArray(vehicles?.items)
+    ? vehicles.items
+    : [];
     items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     res.json({
@@ -390,3 +401,4 @@ export const updateVehicleStatus = async (req, res, next) => {
     next(err);
   }
 };
+
