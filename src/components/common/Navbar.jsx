@@ -112,51 +112,7 @@ export const Navbar = () => {
             )}
           </nav>
 
-          {/* Zone 3: Quick Demo Role Switcher & Auth Actions */}
-          <div className="hidden lg:flex items-center gap-3">
-            {/* Academic/Reviewer Quick Account Switcher */}
-            <div className="flex items-center gap-1 bg-slate-100/90 p-1 rounded-lg border border-slate-200/80 text-xs text-slate-600">
-              <span className="px-2 font-medium text-slate-500 flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                Demo:
-              </span>
-              <button
-                disabled={isSwitching}
-                onClick={() => handleQuickSwitch('customer')}
-                className={`px-2 py-1 rounded font-medium transition-colors ${
-                  user?.role === 'customer'
-                    ? 'bg-white text-emerald-700 shadow-xs'
-                    : 'hover:text-slate-900'
-                }`}
-                title="Log in as Test Customer (Aarav Mehta)"
-              >
-                Customer
-              </button>
-              <button
-                disabled={isSwitching}
-                onClick={() => handleQuickSwitch('owner')}
-                className={`px-2 py-1 rounded font-medium transition-colors ${
-                  user?.role === 'owner'
-                    ? 'bg-white text-emerald-700 shadow-xs'
-                    : 'hover:text-slate-900'
-                }`}
-                title="Log in as Test Owner (Vikram Sharma)"
-              >
-                Owner
-              </button>
-              <button
-                disabled={isSwitching}
-                onClick={() => handleQuickSwitch('admin')}
-                className={`px-2 py-1 rounded font-medium transition-colors ${
-                  user?.role === 'admin'
-                    ? 'bg-white text-emerald-700 shadow-xs'
-                    : 'hover:text-slate-900'
-                }`}
-                title="Log in as System Admin"
-              >
-                Admin
-              </button>
-            </div>
+          <div className="hidden lg:flex items-center gap-3">           
 
             {isAuthenticated ? (
               <div className="flex items-center gap-2">
@@ -246,30 +202,6 @@ export const Navbar = () => {
             )}
           </nav>
 
-          {/* Mobile Demo Switcher */}
-          <div className="pt-2 border-t border-slate-100">
-            <p className="text-xs font-semibold text-slate-400 mb-2">Switch Test Account:</p>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                onClick={() => handleQuickSwitch('customer')}
-                className="px-2 py-1.5 text-xs font-medium rounded bg-slate-100 text-slate-700 hover:bg-slate-200"
-              >
-                Customer
-              </button>
-              <button
-                onClick={() => handleQuickSwitch('owner')}
-                className="px-2 py-1.5 text-xs font-medium rounded bg-slate-100 text-slate-700 hover:bg-slate-200"
-              >
-                Owner
-              </button>
-              <button
-                onClick={() => handleQuickSwitch('admin')}
-                className="px-2 py-1.5 text-xs font-medium rounded bg-slate-100 text-slate-700 hover:bg-slate-200"
-              >
-                Admin
-              </button>
-            </div>
-          </div>
 
           {/* Auth mobile buttons */}
           <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
