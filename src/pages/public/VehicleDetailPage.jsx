@@ -67,7 +67,7 @@ export const VehicleDetailPage = () => {
   }
 
   const images = vehicle.images && vehicle.images.length > 0 ? vehicle.images : [
-    '/src/assets/images/category_premium_cars_1791462718047.jpg'
+    '/images/category_premium_cars_1791462718047.jpg'
   ];
 
   return (
