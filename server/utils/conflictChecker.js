@@ -1,19 +1,28 @@
+
 import { Booking } from '../models/index.js';
 
 /**
  * Checks if a vehicle has an overlapping booking.
- * Overlap condition:
- * Existing booking [startA, endA] and Requested booking [startB, endB]
- * Conflict exists when: startA < endB AND endA > startB
  *
- * Only bookings with status 'pending', 'confirmed', or 'active' conflict.
- * 'cancelled' and 'rejected' do NOT block availability.
+ * Overlap condition:
+ * Existing booking [startA, endA]
+ * Requested booking [startB, endB]
+ *
+ * Conflict exists when:
+ * startA < endB AND endA > startB
+ *
+ * Only pending, confirmed, and active bookings block availability.
  */
-export const checkBookingConflict = async (vehicleId, startDateTime, endDateTime, excludeBookingId = null) => {
+export const checkBookingConflict = async (
+  vehicleId,
+  startDateTime,
+  endDateTime,
+  excludeBookingId = null
+) => {
   const reqStart = new Date(startDateTime).getTime();
   const reqEnd = new Date(endDateTime).getTime();
 
-  if (isNaN(reqStart) || isNaN(reqEnd)) {
+  if (Number.isNaN(reqStart) || Number.isNaN(reqEnd)) {
     throw new Error('Invalid date parameters.');
   }
 
@@ -21,31 +30,58 @@ export const checkBookingConflict = async (vehicleId, startDateTime, endDateTime
     throw new Error('End date must be after start date.');
   }
 
-  // Find all active/pending/confirmed bookings for this vehicle
-  const bookings = await Booking.find({
+  // Fetch bookings for this vehicle.
+  const result = await Booking.find({
     vehicle: String(vehicleId),
   });
 
-  const blockingStatuses = ['pending', 'confirmed', 'active'];
+  // MongoDB returns an array. The local wrapper may expose .items.
+  const bookings = Array.isArray(result)
+    ? result
+    : Array.isArray(result?.items)
+      ? result.items
+      : [];
 
-  const conflictingBooking = bookings.items.find(b => {
-    if (excludeBookingId && String(b._id) === String(excludeBookingId)) {
+  const blockingStatuses = [
+    'pending',
+    'confirmed',
+    'active',
+  ];
+
+  const conflictingBooking = bookings.find((booking) => {
+    if (
+      excludeBookingId &&
+      String(booking._id) === String(excludeBookingId)
+    ) {
       return false;
     }
 
-    if (!blockingStatuses.includes(b.bookingStatus)) {
+    if (!blockingStatuses.includes(booking.bookingStatus)) {
       return false;
     }
 
-    const existStart = new Date(b.startDateTime).getTime();
-    const existEnd = new Date(b.endDateTime).getTime();
+    const existingStart = new Date(
+      booking.startDateTime
+    ).getTime();
 
-    // Standard interval overlap condition
-    return existStart < reqEnd && existEnd > reqStart;
+    const existingEnd = new Date(
+      booking.endDateTime
+    ).getTime();
+
+    // Ignore bookings with invalid date data.
+    if (
+      Number.isNaN(existingStart) ||
+      Number.isNaN(existingEnd)
+    ) {
+      return false;
+    }
+
+    // Standard interval-overlap condition.
+    return existingStart < reqEnd && existingEnd > reqStart;
   });
 
   return {
-    hasConflict: !!conflictingBooking,
+    hasConflict: Boolean(conflictingBooking),
     conflictingBooking: conflictingBooking || null,
   };
 };
